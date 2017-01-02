@@ -37,18 +37,15 @@ namespace {
   const double StealRatio = 0.35; // However we must not steal time from remaining moves over this ratio
 
 
-  // move_importance() is a skew-logistic function based on naive statistical
-  // analysis of "how many games are still undecided after n half-moves". Game
-  // is considered "undecided" as long as neither side has >275cp advantage.
-  // Data was extracted from the CCRL game database with some simple filtering criteria.
+  // Exponential distribution on move_importance() based on move horizon and ply
+  // with the idea to score nearer moves with more importance than future moves which
+  // are less likely to be played anyway.
 
   double move_importance(int ply) {
 
-    const double XScale = 7.64;
-    const double XShift = 58.4;
-    const double Skew   = 0.183;
+    const double rate = 1 / (double) MoveHorizon;
 
-    return pow((1 + exp((ply - XShift) / XScale)), -Skew) + DBL_MIN; // Ensure non-zero
+    return rate * exp(-rate * (ply / 2)) + DBL_MIN; // Ensure non-zero
   }
 
   template<TimeType T>
